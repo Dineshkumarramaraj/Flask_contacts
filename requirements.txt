@@ -1,5 +1,5 @@
 flask
-jwt
+PyJWT
 flake8
-flask_sqlalchemy
+Flask-SQLAlchemy
 werkzeug

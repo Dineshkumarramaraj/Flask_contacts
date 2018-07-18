@@ -17,12 +17,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = \
 
 db = SQLAlchemy(app)
 
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
     name = db.Column(db.String(50))
     password = db.Column(db.String(80))
     admin = db.Column(db.Boolean)
+
 
 class Contacts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,17 +44,18 @@ def token_required(f):
             token = request.headers['X-Auth-Token']
 
         if not token:
-            return jsonify({'message' : 'Token is missing!'}), 401
+            return jsonify({'message': 'Token is missing!'}), 401
 
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'])
             current_user = User.query.filter_by(public_id=data['public_id']).first()
         except:
-            return jsonify({'message' : 'Token is invalid!'}), 401
+            return jsonify({'message': 'Token is invalid!'}), 401
 
         return f(current_user, *args, **kwargs)
 
     return decorated
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -60,23 +63,23 @@ def login():
 
     if not auth or not auth.username or not auth.password:
         return make_response('Could not verify', 401, {
-            'WWW-Authenticate' : 'Basic realm="Login required!"'})
+            'WWW-Authenticate': 'Basic realm="Login required!"'})
 
     user = User.query.filter_by(name=auth.username).first()
 
     if not user:
         return make_response('Could not verify', 401, {
-            'WWW-Authenticate' : 'Basic realm="Login required!"'})
+            'WWW-Authenticate': 'Basic realm="Login required!"'})
 
     if check_password_hash(user.password, auth.password):
         token = jwt.encode({
-            'public_id' : user.public_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(
+            'public_id': user.public_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(
                 minutes=30)}, app.config['SECRET_KEY'])
 
-        return jsonify({'token' : token.decode('UTF-8')})
+        return jsonify({'token': token.decode('UTF-8')})
 
     return make_response('Could not verify', 401, {
-        'WWW-Authenticate' : 'Basic realm="Login required!"'})
+        'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
 @app.route('/user', methods=['POST'])
@@ -93,7 +96,7 @@ def create_user():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message' : 'New user created!'})
+    return jsonify({'message': 'New user created!'})
 
 
 # POST - /contact data: {Firstname}
@@ -110,17 +113,18 @@ def create_contact(current_user):
     db.session.add(new_contact)
     db.session.commit()
 
-    return jsonify({'message' : "Contact created!"})
+    return jsonify({'message': "Contact created!"})
+
 
 # GET - /contact/<string:name>
-@app.route('/contacts/<string:name>') # http://127.0.0.1:5000/contact/<name>
+@app.route('/contacts/<string:name>')  # http://127.0.0.1:5000/contact/<name>
 @token_required
 def get_contact(current_user, name):
 
     contacts = Contacts.query.filter_by(user_id=current_user.id, firstname=name).first()
 
     if not contacts:
-        return jsonify({'message' : 'Contact not found!'})
+        return jsonify({'message': 'Contact not found!'})
 
     contact_data = {}
     contact_data['id'] = contacts.id
@@ -130,6 +134,7 @@ def get_contact(current_user, name):
     contact_data['phone'] = contacts.phone
 
     return jsonify({'contacts': contact_data})
+
 
 # GET - /contacts
 @app.route('/contacts')
@@ -150,8 +155,49 @@ def list_contacts(current_user):
 
     return jsonify({'contacts': contact_data})
 
+
 # PUT
-# DELETE
+@app.route('/contacts/<string:name>', methods=['PUT'])
+@token_required
+def change_contacts(current_user, name):
+    data = request.get_json()
+
+    contacts = Contacts.query.filter_by(
+        user_id=current_user.id, firstname=name).first()
+
+    contacts.firstname = data['First Name']
+    contacts.lastname = data['Last Name']
+    contacts.emailid = data['Email Id']
+    contacts.phone = data['Phone']
+
+    db.session.commit()
+
+    contacts = Contacts.query.filter_by(
+        user_id=current_user.id, firstname=data['First Name'],
+        lastname=data['Last Name']).first()
+
+    contact_data = {}
+    contact_data['id'] = contacts.id
+    contact_data['firstname'] = contacts.firstname
+    contact_data['lastname'] = contacts.lastname
+    contact_data['emailid'] = contacts.emailid
+    contact_data['phone'] = contacts.phone
+
+    return jsonify({'contacts': contact_data})
+
+
+# Delete
+@app.route('/contacts/<string:name>', methods=['DELETE'])
+@token_required
+def delete_contacts(current_user, name):
+
+    contacts = Contacts.query.filter_by(
+        user_id=current_user.id, firstname=name).first()
+
+    db.session.delete(contacts)
+    db.session.commit()
+
+    return jsonify({'message': "Message Got Deleted!!!"})
 
 
 if __name__ == '__main__':
