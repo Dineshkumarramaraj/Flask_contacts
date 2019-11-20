@@ -155,6 +155,11 @@ def list_contacts(current_user):
 
     return jsonify({'contacts': contact_data})
 
+# GET - /contacts
+@app.route('/users')
+def list_contacts():
+    return "No users"
+
 
 # PUT
 @app.route('/contacts/<string:name>', methods=['PUT'])
