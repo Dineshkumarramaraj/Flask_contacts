@@ -137,27 +137,31 @@ def get_contact(current_user, name):
 
 
 # GET - /contacts
-@app.route('/contacts')
+#@app.route('/contacts')
 @token_required
+# def list_contacts(current_user):
+
+#     contacts = Contacts.query.filter_by(user_id=current_user.id).all()
+#     output = []
+
+#     for contact in contacts:
+#         contact_data = {}
+#         contact_data['id'] = contact.id
+#         contact_data['firstname'] = contact.firstname
+#         contact_data['lastname'] = contact.lastname
+#         contact_data['emailid'] = contact.emailid
+#         contact_data['phone'] = contact.phone
+#         output.append(contact_data)
+
+#     return jsonify({'contacts': contact_data})
+
+@app.route('/contacts')
 def list_contacts(current_user):
+    return "No Contact"
 
-    contacts = Contacts.query.filter_by(user_id=current_user.id).all()
-    output = []
-
-    for contact in contacts:
-        contact_data = {}
-        contact_data['id'] = contact.id
-        contact_data['firstname'] = contact.firstname
-        contact_data['lastname'] = contact.lastname
-        contact_data['emailid'] = contact.emailid
-        contact_data['phone'] = contact.phone
-        output.append(contact_data)
-
-    return jsonify({'contacts': contact_data})
-
-# GET - /contacts
+# GET - /users
 @app.route('/users')
-def list_contacts():
+def list_userss():
     return "No users"
 
 
